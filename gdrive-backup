@@ -42,7 +42,7 @@ function echo_err() {
 }
 
 function finish() {
-  echo_log "$SILENT_OPTION" "\n$CLI_NAME Script terminated\n"
+  echo_log "\n$CLI_NAME Script terminated\n"
 }
 
 trap finish EXIT
@@ -114,11 +114,7 @@ fi
 RESTIC_HOST=${RESTIC_HOST:-gdrive}
 
 # Mount
-GDRIVE_MOUNT_PATH=/gdrive
-if [ ! -d $GDRIVE_MOUNT_PATH ]; then
-  mkdir -p $GDRIVE_MOUNT_PATH
-fi
-if [ -n "$(ls -A /path/to/directory)" ]; then
+if [ -n "$(ls -A "$GDRIVE_MOUNT_PATH")" ]; then
     echo_err "Google Drive Mount Directory ($GDRIVE_MOUNT_PATH) is not empty."
     exit 1
 fi

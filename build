@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Exit immediately if a command exits with a non-zero status
+set -Eeuo pipefail
+
+
+# Build or exit
+docker build . -t ghcr.io/gerardnico/dokuwiki:latest
+
