@@ -45,45 +45,85 @@ token = {"access_token":"xxx","token_type":"Bearer","refresh_token":"xxxxxxxxxx"
 ```
 
 
-### Backup With Docker
+### Restic Repository Init
 
-When running with Docker:
-* the Rclone configuration is passed via [rclone environments](#rclone-environments-variables)
-* the Restic configuration is passed via restic environments
+Before making a backup, you need to [initialize a Restic repository](https://restic.readthedocs.io/en/latest/030_preparing_a_new_repo.html) (where the backup snapshots are stored)
 
+Example of a Restic Configuration for a [S3-compatible Storage](https://restic.readthedocs.io/en/latest/030_preparing_a_new_repo.html#s3-compatible-storage)
 ```bash
-# Rclone
+RESTIC_PASSWORD=your-restic-password 
+RESTIC_REPOSITORY=s3:https://h0k0.ca.idrivee2-22.com/bucket_name/path_if_any
+RESTIC_AWS_ACCESS_KEY_ID=the-access-key
+RESTIC_AWS_SECRET_ACCESS_KEY=the-secret
+```
+
+You can then create it by executing the `restic init` command with this Docker run command
+```bash
+docker run \
+  --rm \
+  -it \
+  -e RESTIC_PASSWORD=$RESTIC_PASSWORD \
+  -e RESTIC_REPOSITORY=$RESTIC_REPOSITORY \
+  -e AWS_ACCESS_KEY_ID=$RESTIC_AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY=$RESTIC_AWS_SECRET_ACCESS_KEY\
+  ghcr.io/gerardnico/gdrive-backup:latest \
+  restic init
+```
+
+
+### Rclone Configuration
+
+When running with Docker the Rclone configuration is passed via [the rclone environment variables](https://rclone.org/docs/#environment-variables).
+where the remote is `gdrive` and the environment follow then this syntax:  `RCLONE_CONFIG_REMOTE_NAME_XXX` 
+
+You need to set the below configuration
+```bash
 RCLONE_CONFIG_GDRIVE_CLIENT_ID=your-gdrive-client-id
 RCLONE_CONFIG_GDRIVE_CLIENT_SECRET=your-gdrive-client-secret
 RCLONE_CONFIG_GDRIVE_TOKEN=your-gdrive-token
 ```
 
-Run
-```bash
-docker run \
-  --rm \
-  -e RCLONE_CONFIG_GDRIVE_CLIENT_ID=$RCLONE_CONFIG_GDRIVE_CLIENT_ID \
-  -e RCLONE_CONFIG_GDRIVE_CLIENT_SECRET=$RCLONE_CONFIG_GDRIVE_CLIENT_SECRET \
-  -e RCLONE_CONFIG_GDRIVE_TOKEN=$RCLONE_CONFIG_GDRIVE_TOKEN \
-  --cap-add SYS_ADMIN \
-  --device /dev/fuse \
-  --name gdrive-backup \
-  ghcr.io/gerardnico/gdrive-backup:latest
-```
-
-
-## Support
-
-### Rclone Environments Variables
-
-In Docker, the rclone remote name is configured via [the native rclone environment variable](https://rclone.org/docs/#environment-variables).
-ie `RCLONE_CONFIG_REMOTE_NAME_XXX` where the remote is named `gdrive`
-
-The below configuration are optional because they are already set for you.
+Note: The below configuration are optional because they are already set for you.
 ```bash
 RCLONE_CONFIG_GDRIVE_TYPE=drive
 RCLONE_CONFIG_GDRIVE_SCOPE=drive.readonly,drive.metadata.readonly
 ```
+
+### Backup With Docker
+
+In the Docker command: 
+  * we pass the configuration via environment variables:
+    * the [Rclone configuration](#rclone-configuration)
+    * the [Restic configuration](#restic-repository-init)
+  * we allow a Rclone mount with the following arguments
+```bash
+--cap-add SYS_ADMIN \
+--device /dev/fuse
+```
+
+
+To make a dry-run on a back-up of the whole Google Drive, you would run this command:
+```bash
+docker run \
+  --rm \
+  --name gdrive-backup \
+  -e RCLONE_CONFIG_GDRIVE_CLIENT_ID=$RCLONE_CONFIG_GDRIVE_CLIENT_ID \
+  -e RCLONE_CONFIG_GDRIVE_CLIENT_SECRET=$RCLONE_CONFIG_GDRIVE_CLIENT_SECRET \
+  -e RCLONE_CONFIG_GDRIVE_TOKEN=$RCLONE_CONFIG_GDRIVE_TOKEN \
+  -e RESTIC_PASSWORD=$RESTIC_PASSWORD \
+  -e RESTIC_REPOSITORY=$RESTIC_REPOSITORY \
+  -e AWS_ACCESS_KEY_ID=$RESTIC_AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY=$RESTIC_AWS_SECRET_ACCESS_KEY \ 
+  --cap-add SYS_ADMIN \
+  --device /dev/fuse \
+  ghcr.io/gerardnico/gdrive-backup:latest \
+  gdrive-backup -n /
+```
+
+If you want to execute it, just delete the `-n` dry run option.
+
+
+## Support
 
 ### Can I use a Service Account?
 
