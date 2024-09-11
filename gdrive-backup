@@ -80,12 +80,16 @@ fi
 
 # Get the last argument
 GDRIVE_DIRECTORY_TO_BACKUP="${args[-1]}"
+if [ "$GDRIVE_DIRECTORY_TO_BACKUP" == "" ]; then
+  echo_err "A Google Drive directory to backup is mandatory. For instance, a backslash / for the whole drive."
+  help
+  exit 1
+fi
 
 # Get all arguments except the last one
 RESTIC_OPTIONS=("${args[@]::${#args[@]}-1}")
 
 # Check for help
-GDRIVE_DIRECTORY_TO_BACKUP=""
 for arg in "$@"; do
   if [ "$arg" == "--help" ];then
       help
@@ -93,18 +97,12 @@ for arg in "$@"; do
   fi
 done
 
-if [ "$GDRIVE_DIRECTORY_TO_BACKUP" == "" ]; then
-  echo_err "A Google Drive directory to backup is mandatory. For instance, a backslash / for the whole drive"
-  help
-  exit 1
-fi
-
-
 # Make RESTIC AWS secret, AWS environment
+RESTIC_AWS_SECRET_ACCESS_KEY=${RESTIC_AWS_SECRET_ACCESS_KEY:-}
 if [ "$RESTIC_AWS_SECRET_ACCESS_KEY" != "" ] && [ "$AWS_SECRET_ACCESS_KEY" == "" ]; then
   export AWS_SECRET_ACCESS_KEY="$RESTIC_AWS_SECRET_ACCESS_KEY";
 fi
-
+RESTIC_AWS_ACCESS_KEY_ID=${RESTIC_AWS_ACCESS_KEY_ID:-}
 if [ "$RESTIC_AWS_ACCESS_KEY_ID" != "" ] && [ "$AWS_ACCESS_KEY_ID" == "" ]; then
   export AWS_ACCESS_KEY_ID="$RESTIC_AWS_ACCESS_KEY_ID";
 fi
@@ -114,14 +112,19 @@ fi
 RESTIC_HOST=${RESTIC_HOST:-gdrive}
 
 # Mount
-if [ -n "$(ls -A "$GDRIVE_MOUNT_PATH")" ]; then
-    echo_err "Google Drive Mount Directory ($GDRIVE_MOUNT_PATH) is not empty."
-    exit 1
+if mount | grep "${GDRIVE_MOUNT_PATH} type fuse.rclone" > /dev/null; then
+  echo_log "Gdrive is already mounted at ${GDRIVE_MOUNT_PATH}"
+else
+  if [ -n "$(ls -A "$GDRIVE_MOUNT_PATH")" ]; then
+      echo_err "Google Drive Mount Directory ($GDRIVE_MOUNT_PATH) is not empty."
+      exit 1
+  fi
+  echo_log "Mounting ${GDRIVE_MOUNT_PATH} as a GDrive fuse file system."
+  RCLONE_MOUNT_COMMAND="rclone mount gdrive: $GDRIVE_MOUNT_PATH --daemon"
+  echo_log "Rclone Mount Command: $RCLONE_MOUNT_COMMAND"
+  eval "$RCLONE_MOUNT_COMMAND"
 fi
 
-RCLONE_MOUNT_COMMAND="rclone mount gdrive: $GDRIVE_MOUNT_PATH --daemon"
-echo_log "Rclone Mount Command: $RCLONE_MOUNT_COMMAND"
-eval "$RCLONE_MOUNT_COMMAND"
 
 # Backup
 # We pass the whole
