@@ -17,13 +17,14 @@ RUN apk update \
     # Bash is not installed with the busy box restic base image \
     && apk add --no-cache bash \
     # Curl
-    && apk add --no-cache curl
+    && apk add --no-cache curl \
+    # Fuse to mount drive
+    && apk add --no-cache fuse3
 
 ###################################
 # Rclone
 ###################################
 COPY --chmod=0755 --from=rclone/rclone:1.67.0 /usr/local/bin/rclone /usr/local/bin
-
 
 ####################################
 # Local User Configuration
@@ -36,18 +37,22 @@ RUN addgroup -g 1000 megroup && \
     adduser -u 1000 -G megroup -D --shell /bin/bash me
 
 ####################################
-# Script Installation
+# Gdrive Backup Script Installation
 ####################################
-RUN mkdir "/opt/gdrive-backup"
-COPY --chmod=0755 gdrive-backup /opt/gdrive-backup
-ENV PATH="/opt/gdrive-backup:${PATH}"
+COPY --chmod=0755 gdrive-backup /usr/local/bin
 
-# Where gdrive is mounted
+####################################
+# Rclone (Conf and Drive Path mount)
+####################################
+# Default GDRIVE remote rclone conf
+ENV RCLONE_CONFIG_GDRIVE_TYPE=drive
+ENV RCLONE_CONFIG_GDRIVE_SCOPE=drive.readonly,drive.metadata.readonly
+# Disk path mount where gdrive is mounted by rclone
 ENV GDRIVE_MOUNT_PATH="/gdrive"
 RUN mkdir "$GDRIVE_MOUNT_PATH" && chmod 777 "$GDRIVE_MOUNT_PATH"
 
 ####################################
-# Default CMD
+# Default ENTRYPOINT and CMD
 ####################################
 ENTRYPOINT [""]
 CMD ["gdrive-backup"]
