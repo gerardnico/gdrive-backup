@@ -29,7 +29,13 @@ docker run \
   --cap-add SYS_ADMIN \
   --device /dev/fuse \
   ghcr.io/gerardnico/gdrive-backup:latest \
-  gdrive-backup -n /
   bash
+```
+
+Then you can run your own command such as:
+```bash
+gdrive-backup
+# or rclone mount
+rclone mount gdrive: $GDRIVE_MOUNT_PATH --daemon
 ```
 

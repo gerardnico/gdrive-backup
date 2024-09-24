@@ -117,10 +117,10 @@ docker run \
   --cap-add SYS_ADMIN \
   --device /dev/fuse \
   ghcr.io/gerardnico/gdrive-backup:latest \
-  gdrive-backup -n /
+  gdrive-backup --dry-run /
 ```
 
-If you want to execute it, just delete the `-n` dry run option.
+If you want to execute it, just delete the `--dry-run` dry run option.
 
 
 ## Support
