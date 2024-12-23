@@ -8,7 +8,25 @@ A Google Drive script and Docker container to back up Google Drive for personal 
 * restic
 * and rclone
 
+## Important: Why you will always get changed files with Restic
 
+All native Google files are not exported as native format but as Microsoft format. It's not due to Rclone but to Google that does not [expose their format](https://groups.google.com/g/google-documents-list-api/c/iDBqp-wO6oM/m/ZGP0tXPC43kJ)
+
+You get therefore each time a new file that has changed because it was generated.
+
+For more details, see this [Issue](https://forum.restic.net/t/on-change-detection-can-we-ignore-a-size-of-value-0-for-a-google-drive-backup/8440/1)
+
+Example:
+```
+created new cache in /home/me/.cache/restic
+using parent snapshot de70ef70
+
+Files:           0 new,   474 changed, 40488 unmodified
+Dirs:            0 new,   858 changed,     0 unmodified
+Would add to the repository: 141.029 MiB (121.139 MiB stored)
+
+processed 40962 files, 105.019 GiB in 10:16
+```
 
 ## Steps
 
@@ -121,6 +139,10 @@ docker run \
 ```
 
 If you want to execute it, just delete the `--dry-run` dry run option.
+
+
+
+
 
 
 ## Support
